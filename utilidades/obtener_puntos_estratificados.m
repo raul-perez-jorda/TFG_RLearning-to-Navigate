@@ -16,7 +16,7 @@ TG_strata = linspace(min_TG, max_TG, num_sectores_TG+1);
 
 % Generación de puntos aleatorios estratificados
 carpeta_LearningData = "LearningData_T";
-load(carpeta_LearningData+'/datos_topograficos.mat', 'TL_samples', 'TG_samples');
+load('LearningData_Folders/'+carpeta_LearningData+'/datos_topograficos.mat', 'TL_samples', 'TG_samples');
 
 for i = 1:length(TL_strata)-1
     for j = 1:length(TG_strata)-1

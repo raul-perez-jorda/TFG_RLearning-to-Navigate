@@ -5,9 +5,9 @@ clear; close all;
 %----------------------------------
 % Booleanos
 modo_politica_aprendida = false; % pongo epsilon igual a 5%
-ver_simulador = false;
+ver_simulador = true;
 ver_vista_desde_robot = false; % elegir entre ver simulador o ver desde robot
-estoy_aprendiendo = true;
+estoy_aprendiendo = false;
 
 ver_recompensas_dentro_episodio = false;
 ver_seguimiento_pared_dentro_episodio = false;
@@ -21,9 +21,9 @@ num_episodios_tendencia = 30;
 carpeta_LearningData = "LearningData_T";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
-v_apren = "6D_IP_T17"; % version del aprendizaje
-num_pto_topografico = 17; % solo usado en versiones vw y T
-es_primer_episodio = false;
+v_apren = "6D_IP_T18"; % version del aprendizaje
+num_pto_topografico = 18; % solo usado en versiones vw y T
+es_primer_episodio = true;
 % ---------------------------------------------
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
@@ -68,13 +68,13 @@ if es_primer_episodio
     total_duration_per_episode = [];
     distancias_siguiendo_pared = [];
     num_episodes = 0;
-    load(carpeta_LearningData+'/ptos_aleat.mat', 'ptos_aleat');
+    load('LearningData_Folders/'+carpeta_LearningData+'/ptos_aleat.mat', 'ptos_aleat');
 else  % Importo la versión de las matrices actuales más entrenadas
-    load(carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', 'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', 'num_episodes');
+    load('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', 'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', 'num_episodes');
 end
 
 % Anado las rutinas de calculo al path
-addpath("TFG_routines\")
+addpath("funciones\")
 
 % Inicializo los valores v, w, TL y TG en función del entrenamiento
 vlin = 1;
@@ -83,12 +83,12 @@ TL = 0.3;
 TG = 0.3;
 
 if carpeta_LearningData == "LearningData_vw"
-    load('LearningData_vw/datos_topograficos.mat', 'v_samples', 'w_samples');
+    load('LearningData_Folders/LearningData_vw/datos_topograficos.mat', 'v_samples', 'w_samples');
 
     vlin = v_samples(num_pto_topografico);
     vang = w_samples(num_pto_topografico);
 elseif carpeta_LearningData == "LearningData_T" || carpeta_LearningData=="LearningData"
-    load('LearningData_T/datos_topograficos.mat', 'TL_samples', 'TG_samples');
+    load('LearningData_Folders/LearningData_T/datos_topograficos.mat', 'TL_samples', 'TG_samples');
 
     vlin = 85/100*0.7; % velocidad lineal, entre 0 y 0.7m/s
     vang = deg2rad( 85/100*180 ); % velocidad angular, entre 36 y 180º/s
@@ -378,12 +378,12 @@ while num_episodes < episodios_totales_entrenamiento
     %----------------------------------
     if(estoy_aprendiendo)
         num_episodes = length(total_reward_per_episode);
-        save(carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_'+string(num_episodes)+'.mat', 'Qtable', 'Visitas', ...
+        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_'+string(num_episodes)+'.mat', 'Qtable', 'Visitas', ...
             'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
             'sars', 'politica_actual', 'gtposes');
         % Guardo todos los datos mas recientes para poder seguir entrenando de
         % forma continua
-        save(carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', ...
+        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', ...
             'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
             'num_episodes', 'sars', 'politica_actual', ...
             'TL_samples', 'TG_samples'); % por si acaso borro los iniciales
