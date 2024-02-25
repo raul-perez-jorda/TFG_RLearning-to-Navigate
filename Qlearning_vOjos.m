@@ -32,28 +32,8 @@ epsilon_type = "ptje_aprendido"; % ptje_aprendido(P) - tiempo_vida(T) - constant
 %----------------------------------
 % Inicialización del entorno de aprendizaje
 %----------------------------------
-% Opciones del Q-Learning
-QLearningOpt.max_time_duration_episode = 40; %seconds
-QLearningOpt.total_actions = 3;
-QLearningOpt.discount_factor = 0.99;
-QLearningOpt.learning_rate = 0.1;
-QLearningOpt.exploration_factor = 0.1;
 
-% Opciones de simulacion
-Options.max_laser_range = 3.3; %maxima distancia tomada como valida (en m)
-Options.number_of_laser_regions = 3; % para calcular el ransac de la pared derecha
-% Options.total_points_laser = 1080; % si quiero que coja los 3 sectores de visión
-Options.total_points_laser = 2*1080/3; % si guiero que solo coja el sector derecho y frontal
-
-% Defino las caracteristicas de mi struct de estados discretizados
-stateArrayOpt.num_ojos = 1;
-stateArrayOpt.num_distancias = 3;
-
-stateArrayOpt.total_states = stateArrayOpt.num_distancias^stateArrayOpt.num_ojos; %: numero de estados posibles
-stateArrayOpt.num_actions = 3;
-
-stateArrayOpt.min_dist = 0.4;
-stateArrayOpt.max_dist = 3;
+[paredes_mapa, stateArrayOpt, Options, QLearningOpt] = inicializacionConstantes();
 
 % Parametros del aprendizaje
 alpha = QLearningOpt.learning_rate;
@@ -76,7 +56,7 @@ end
 % Anado las rutinas de calculo al path
 addpath("funciones\")
 
-% Inicializo los valores v, w, TL y TG en función del entrenamiento
+% Inicializo los valores v, w, TL y TG a sus valores predefinidos (cambio en función del entrenamiento)
 vlin = 1;
 vang = pi/2;
 TL = 0.3;
@@ -102,23 +82,7 @@ end
 
 s = Robot(ver_simulador);
 
-s.defineWalls([0, 0, 10, 0 ;... % Defino el inicio y el final de cada pared
-               6, 0, 6, 3 ; ...
-               10, 0, 10, 10 ; ...
-               10, 10, 0, 10 ; ...
-               0, 10, 0, 0 ; ...
-               0, 2, 3, 2 ; ...
-               6, 4, 10, 4;
-               7, 4, 7, 6; ...
-               6 6 7 6; ...
-               6 6 6 7; ...
-               7 8 10 8; ...
-               6 8 6 10; ...
-               0 7 1 7; ...
-               4 7 3 7; ...
-               3 7 3 4; ...
-               3 4 4 4; ...
-               4 4 4 7]);
+s.defineWalls(paredes_mapa);
 s.changeDrawEnv([-0.25 -0.25 10.25 10.25],1); % Defino el tamaño del 'mapa de simulación'
 s.setRangeDrawing(0);
 
@@ -126,52 +90,18 @@ s.setRangeDrawing(0);
 % Entreno un numero determinado de episodios
 %----------------------------------
 while num_episodes < episodios_totales_entrenamiento
-    disp('Episodio '+string(num_episodes)+' del entrenamiento actual')
-    disp('Aprendizaje para ' + string(v_apren))
-    disp('Numero de puntos laser: '+ string(Options.total_points_laser))
-    if carpeta_LearningData == "LearningData_vw"
-        disp('Velocidad lineal: '+ string(v_samples(num_pto_topografico)) + ' m/s')
-        disp('Velocidad angular: '+ string(w_samples(num_pto_topografico)) + ' º/s')
-    elseif carpeta_LearningData == "LearningData_T"
-        disp('Tiempo de mov. lineal TL: '+ string(TL_samples(num_pto_topografico)) + ' m/s')
-        disp('Tiempo de mov. giro TG: '+ string(TG_samples(num_pto_topografico)) + ' º/s')
-    end
-    
 
+    mensajesIniciales()    
 
-    % Muestro algunas estadisticas
-    reparto_visitas_por_accion = sum(Visitas);
-    total_stateaction_pairs = stateArrayOpt.total_states * stateArrayOpt.num_actions;
-    num_estados_no_visitados = 0;
-    for i=1:1:total_stateaction_pairs
-        if sum(Visitas(i)) == 0
-            num_estados_no_visitados = num_estados_no_visitados + 1;
-        end
-    end
-    ptje_parejas_no_visitadas = num_estados_no_visitados/total_stateaction_pairs;
-    disp('Estados no visitados: '+ string(ptje_parejas_no_visitadas*100)+ '%')
+    epsilon = get_epsilon(epsilon_type, num_episodes, ptje_parejas_no_visitadas, modo_politica_aprendida);
 
-    epsilon = get_epsilon(epsilon_type, num_episodes, ptje_parejas_no_visitadas);
-    if(modo_politica_aprendida)
-        epsilon = 0.01;
-    end
-
-    % Inicializar robot
-    robotdef = s.getRobotDef();
-
-    random_initial_orient = deg2rad( randi([0,360],1) );
-    random_initial_pos = randi([1,length(ptos_aleat)],1);
-    random_initial_x = ptos_aleat(random_initial_pos,1);
-    random_initial_y = ptos_aleat(random_initial_pos,2);
-
-    s.changePose([random_initial_x,random_initial_y,random_initial_orient].');
+    [robotdef] = inicializarRobotYColocarloEnMapa();
 
     % Inicializar variables
     sars = [];
-    
-    odomposes = [];
     gtposes = [];
     lasers = [];
+    
     encs = [];
     motors = [];
     ts = [];
@@ -187,20 +117,17 @@ while num_episodes < episodios_totales_entrenamiento
     c=0;
     t = s.getSimTime();
     t_end_last_episode = s.getSimTime();
+
     total_reward_episode = 0;
     distancia_siguiendo_pared = 0;
     
     % Bucle de cada episodio
-    while(~c && (t-t_end_last_episode)<QLearningOpt.max_time_duration_episode) % mientras no me choque
+    while(~c && (t-t_end_last_episode)<QLearningOpt.max_time_duration_episode) %mientras no me choque y no se pase el tiempo maximo
         % Obtengo datos y dibujo
         s.simulate(steptime);
-        [c,iw] = s.collision();
-        if c && ver_simulador % si hay colision
-            figure(s.getFigure());
-            ws = s.getWalls();
-            hold on;
-            plot(ws(iw,[1 3]),ws(iw,[2 4]),'r-','LineWidth',2);
-        end 
+ 
+        [c, iw] = detectoYDibujoColision();
+        
         ts = [ts s.getSimTime()];
         [zs,as] = s.readRange();
         lasers = [lasers ; zs];
@@ -229,8 +156,8 @@ while num_episodes < episodios_totales_entrenamiento
 
         % Decidir accion y ejecutarla
         [V,Vindex] = max(Qtable,[],2);
-        politica_actual = getPoliticaActual(Vindex,QLearningOpt);
-        action = next_action_selection(epsilon,politica_actual,current_state,QLearningOpt);
+        politica_actual = getPoliticaActual(Vindex,stateArrayOpt);
+        action = next_action_selection(epsilon,politica_actual,current_state,stateArrayOpt);
         %disp('Accion: '+string(action))
 
         finish_action = 0;
@@ -243,7 +170,7 @@ while num_episodes < episodios_totales_entrenamiento
                 s.setSpeeds(0,vang);
             elseif(action==3 && t-lastst<=TG) % Accion 3: Gira a la derecha unos 23º
                 s.setSpeeds(0,-vang);
-            elseif(action==-1 || action==QLearningOpt.total_actions+1)
+            elseif(action==-1 || action==stateArrayOpt.num_actions+1)
                 error('Accion seleccionada no es válida.')
             else
                 finish_action = 1;
@@ -333,24 +260,132 @@ while num_episodes < episodios_totales_entrenamiento
             hold off
         end
 
-        %figure(2)
-        %plot(V)
-        % subplot(3,1,1)
-        % plot(Qtable(:,1))
-        % subplot(3,1,2)
-        % plot(Qtable(:,2))
-        % subplot(3,1,3)
-        % plot(Qtable(:,3))  
-
-        %disp(Visitas)
-
     end
     s.clearFigure()
     total_reward_per_episode = [total_reward_per_episode; total_reward_episode];
     total_duration_per_episode = [total_duration_per_episode; t-t_end_last_episode];
     distancias_siguiendo_pared = [distancias_siguiendo_pared; distancia_siguiendo_pared];
     disp('Reward episodio: '+string(total_reward_episode))
-    
+
+    mostrarEvolucionRecompensas(ver_evolucion_recompensas)
+
+    %----------------------------------
+    % Recopilación de datos para tener un historial
+    %----------------------------------
+    if(estoy_aprendiendo)
+        num_episodes = length(total_reward_per_episode);
+        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_'+string(num_episodes)+'.mat', 'Qtable', 'Visitas', ...
+            'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
+            'sars', 'politica_actual', 'gtposes');
+        % Guardo todos los datos mas recientes para poder seguir entrenando de
+        % forma continua
+        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', ...
+            'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
+            'num_episodes', 'sars', 'politica_actual', ...
+            'TL_samples', 'TG_samples'); % por si acaso borro los iniciales
+    end
+end
+
+
+% ---------------------------------------------------------------------------------------------------------------------------------------
+% Funciones auxiliares
+% ---------------------------------------------------------------------------------------------------------------------------------------
+
+
+% Inicializo las constantes
+function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes()
+    % Opciones del Q-Learning
+    QLearningOpt.max_time_duration_episode = 40; %seconds
+    QLearningOpt.discount_factor = 0.99;
+    QLearningOpt.learning_rate = 0.1;
+    QLearningOpt.exploration_factor = 0.1;
+
+    % Opciones de simulacion
+    Options.max_laser_range = 3.3; %maxima distancia tomada como valida (en m)
+    Options.number_of_laser_regions = 3; % para calcular el ransac de la pared derecha
+    % Options.total_points_laser = 1080; % si quiero que coja los 3 sectores de visión
+    Options.total_points_laser = 2*1080/3; % si guiero que solo coja el sector derecho y frontal
+
+    % Defino las caracteristicas de mi struct de estados discretizados
+    stateArrayOpt.num_ojos = 6;
+    stateArrayOpt.num_distancias = 3;
+
+    stateArrayOpt.total_states = stateArrayOpt.num_distancias^stateArrayOpt.num_ojos; %: numero de estados posibles
+    stateArrayOpt.num_actions = 3;
+
+    stateArrayOpt.min_dist = 0.4;
+    stateArrayOpt.max_dist = 3;
+
+    paredes_mapa = [0, 0, 10, 0 ;... % Defino el inicio y el final de cada pared
+                        6, 0, 6, 3 ; ...
+                        10, 0, 10, 10 ; ...
+                        10, 10, 0, 10 ; ...
+                        0, 10, 0, 0 ; ...
+                        0, 2, 3, 2 ; ...
+                        6, 4, 10, 4;
+                        7, 4, 7, 6; ...
+                        6 6 7 6; ...
+                        6 6 6 7; ...
+                        7 8 10 8; ...
+                        6 8 6 10; ...
+                        0 7 1 7; ...
+                        4 7 3 7; ...
+                        3 7 3 4; ...
+                        3 4 4 4; ...
+                        4 4 4 7];
+end
+
+% Muestro unos mensajes al inicio de cada episodio
+function mensajesIniciales()
+    disp('Episodio '+string(num_episodes)+' del entrenamiento actual')
+    disp('Aprendizaje para ' + string(v_apren))
+    disp('Numero de puntos laser: '+ string(Options.total_points_laser))
+    if carpeta_LearningData == "LearningData_vw"
+        disp('Velocidad lineal: '+ string(v_samples(num_pto_topografico)) + ' m/s')
+        disp('Velocidad angular: '+ string(w_samples(num_pto_topografico)) + ' º/s')
+    elseif carpeta_LearningData == "LearningData_T"
+        disp('Tiempo de mov. lineal TL: '+ string(TL_samples(num_pto_topografico)) + ' m/s')
+        disp('Tiempo de mov. giro TG: '+ string(TG_samples(num_pto_topografico)) + ' º/s')
+    end
+
+    % Muestro algunas estadisticas
+    reparto_visitas_por_accion = sum(Visitas);
+    total_stateaction_pairs = stateArrayOpt.total_states * stateArrayOpt.num_actions;
+    num_estados_no_visitados = 0;
+    for i=1:1:total_stateaction_pairs
+        if sum(Visitas(i)) == 0
+            num_estados_no_visitados = num_estados_no_visitados + 1;
+        end
+    end
+    ptje_parejas_no_visitadas = num_estados_no_visitados/total_stateaction_pairs;
+    disp('Estados no visitados: '+ string(ptje_parejas_no_visitadas*100)+ '%')
+end
+
+% Inicializo el robot y lo coloco en el mapa
+function [robotdef] = inicializarRobotYColocarloEnMapa()
+    % Inicializar robot
+    robotdef = s.getRobotDef();
+
+    random_initial_orient = deg2rad( randi([0,360],1) );
+    random_initial_pos = randi([1,length(ptos_aleat)],1);
+    random_initial_x = ptos_aleat(random_initial_pos,1);
+    random_initial_y = ptos_aleat(random_initial_pos,2);
+
+    s.changePose([random_initial_x,random_initial_y,random_initial_orient].');
+end
+
+% Detecto si hay colisión, la pinto y aviso
+function [c,iw] = detectoYDibujoColision()
+    [c,iw] = s.collision();
+        if c && ver_simulador % si hay colision
+            figure(s.getFigure());
+            ws = s.getWalls();
+            hold on;
+            plot(ws(iw,[1 3]),ws(iw,[2 4]),'r-','LineWidth',2);
+        end 
+end
+
+function mostrarEvolucionRecompensas(ver_evolucion_recompensas)
     if(ver_evolucion_recompensas)
         figure(4)
         clf
@@ -371,21 +406,5 @@ while num_episodes < episodios_totales_entrenamiento
         plot(distancias_siguiendo_pared,'-g')
         plot(movmean(distancias_siguiendo_pared,num_episodios_tendencia), '.-k')
         hold off
-    end
-
-    %----------------------------------
-    % Recopilación de datos para tener un historial
-    %----------------------------------
-    if(estoy_aprendiendo)
-        num_episodes = length(total_reward_per_episode);
-        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_'+string(num_episodes)+'.mat', 'Qtable', 'Visitas', ...
-            'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
-            'sars', 'politica_actual', 'gtposes');
-        % Guardo todos los datos mas recientes para poder seguir entrenando de
-        % forma continua
-        save('LearningData_Folders/'+carpeta_LearningData+'/vO'+v_apren+'/Qlearning_data_vO'+v_apren+'_mas_reciente.mat', 'ptos_aleat', 'Qtable', 'Visitas', ...
-            'total_reward_per_episode', 'total_duration_per_episode', 'distancias_siguiendo_pared', ...
-            'num_episodes', 'sars', 'politica_actual', ...
-            'TL_samples', 'TG_samples'); % por si acaso borro los iniciales
     end
 end
