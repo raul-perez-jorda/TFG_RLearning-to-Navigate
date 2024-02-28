@@ -1,4 +1,4 @@
-function [ransac_x, ransac_y, m, n, triplete] = RANSAC_triplete_der(zs, as, sampleSize, maxDistance, Options)  
+function [ransac_x, ransac_y, m, n, triplete] = RANSAC_triplete_der(zs, as, Options)  
 % Para una nube de puntos dada obtener los puntos de la linea ransac para
 % valor x e y; la pendiente y el termino independientes de esta recta m y
 % n; finalmente el angulo respecto a la recta eje x, la distancia más corta
@@ -31,7 +31,7 @@ function [ransac_x, ransac_y, m, n, triplete] = RANSAC_triplete_der(zs, as, samp
           @(model, points) sum((points(:, 2) - polyval(model, points(:,1))).^2,2);
     
         [~, inlierIdx] = ransac(points,fitLineFcn,evalLineFcn, ...
-          sampleSize,maxDistance);
+          Options.sampleSize_RANSAC,Options.tolerance_dist_RANSAC);
     
         modelInliers = polyfit(points(inlierIdx,1),points(inlierIdx,2),1);
     
@@ -61,7 +61,7 @@ function [ransac_x, ransac_y, m, n, triplete] = RANSAC_triplete_der(zs, as, samp
         ransac_y = [];
         m = 0;
         n = [];
-        d = maxDistance;
+        d = Options.max_laser_range;
         alpha = 0;
         qual = 0;
     end      

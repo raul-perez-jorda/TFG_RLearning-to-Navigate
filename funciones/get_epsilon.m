@@ -1,4 +1,4 @@
-function [epsilon] = get_epsilon(epsilon_type, num_episodes, ptje_parejas_no_visitadas)
+function [epsilon] = get_epsilon(epsilon_type, num_episodes, ptje_parejas_no_visitadas, modo_politica_aprendida)
     if(modo_politica_aprendida)
         epsilon = 0.01;
     else
