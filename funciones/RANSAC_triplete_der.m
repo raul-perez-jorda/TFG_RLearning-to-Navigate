@@ -13,7 +13,7 @@ function [ransac_x, ransac_y, m, n, triplete] = RANSAC_triplete_der(zs, as, Opti
     ptos_cartes1 = ptos_cartes(1:points_region,:); %puntos de la parte derecha del robot
 
     % Limpiar puntos del laser con distancia mayor a la máxima
-    vec_ptos_validos = boolean([]);
+    vec_ptos_validos = logical([]);
     for i=1:1:length(zs)
         if(zs(i) > Options.max_laser_range)
             vec_ptos_validos(i,1) = false;

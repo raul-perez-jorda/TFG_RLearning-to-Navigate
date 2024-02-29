@@ -5,35 +5,53 @@ clear; close all;
 %----------------------------------
 % Booleanos
 modo_politica_aprendida = false; % pongo epsilon igual a 5%
-ver_simulador = true;
+ver_simulador = false;
 ver_vista_desde_robot = false; % elegir entre ver simulador o ver desde robot
 estoy_aprendiendo = true;
 
 ver_recompensas_dentro_episodio = false;
 ver_seguimiento_pared_dentro_episodio = false;
+<<<<<<< Updated upstream
 ver_evolucion_recompensas = true;
 
 % Enteros 
 episodios_totales_entrenamiento = 1000;
+=======
+
+ver_evolucion_recompensas = false;
+
+% Enteros 
+episodios_totales_entrenamiento = 2000;
+>>>>>>> Stashed changes
 num_episodios_tendencia = 30;
 
 % Variables directorio de guardado
 carpeta_LearningData = "LearningData9_numLasers";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
+<<<<<<< Updated upstream
 v_apren = "4"; % version del aprendizaje
 num_pto_topografico = 0; % solo usado en versiones vw y T
+=======
+stateArrayOpt.num_ojos = 8;
+v_apren = "8"; % version del aprendizaje
+>>>>>>> Stashed changes
 es_primer_episodio = false;
 % ---------------------------------------------
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
 epsilon_type = "ptje_aprendido"; % ptje_aprendido(P) - tiempo_vida(T) - constante(C)
+num_pto_topografico = 0; % solo usado en versiones vw y T
 
 %----------------------------------
 % Inicialización del entorno de aprendizaje
 %----------------------------------
 
+<<<<<<< Updated upstream
 [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes();
+=======
+[paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt);
+>>>>>>> Stashed changes
 
 % Parametros del aprendizaje
 gamma = QLearningOpt.discount_factor;
@@ -43,6 +61,10 @@ gamma = QLearningOpt.discount_factor;
 
 % Anado las rutinas de calculo al path
 addpath("funciones\")
+<<<<<<< Updated upstream
+=======
+addpath("graficos\")
+>>>>>>> Stashed changes
 
 %----------------------------------
 % Inicialización del simulador
@@ -141,7 +163,11 @@ end
 
 
 % Inicializo las constantes
+<<<<<<< Updated upstream
 function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes()
+=======
+function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt)
+>>>>>>> Stashed changes
     % Opciones del Q-Learning
     QLearningOpt.max_time_duration_episode = 40; %seconds
     QLearningOpt.discount_factor = 0.99;
@@ -158,7 +184,10 @@ function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionCo
     Options.sampleSize_RANSAC = 2;
 
     % Defino las caracteristicas de mi struct de estados discretizados
+<<<<<<< Updated upstream
     stateArrayOpt.num_ojos = 4;
+=======
+>>>>>>> Stashed changes
     stateArrayOpt.num_distancias = 3;
 
     stateArrayOpt.total_states = stateArrayOpt.num_distancias^stateArrayOpt.num_ojos; %: numero de estados posibles
