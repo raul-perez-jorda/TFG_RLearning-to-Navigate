@@ -4,7 +4,8 @@ clear; close all;
 % carpeta_LearningData = "LearningData_bigEyes";
 % carpeta_LearningData = "LearningData_Hiperparametros";
 % carpeta_LearningData = "LearningData_vw";
-carpeta_LearningData = "LearningData9_numLasers";
+% carpeta_LearningData = "LearningData9_numLasers";
+carpeta_LearningData = "LearningData10_numLasersMinDistRegion";
 
 % versiones = ["3"; "3D"; "4"; "4D"; "5"; "5D"; "6"; "6D"; "7"; "7D"; "8"; "8D"];
 versiones = ["3"; "4"; "5"; "6"; "7"; "8"];
@@ -24,7 +25,7 @@ hold on
 for i = 1:1:length(versiones)
     load('LearningData_Folders/'+carpeta_LearningData+'/vO'+versiones(i)+'/Qlearning_data_vO'+versiones(i)+'_mas_reciente.mat','total_reward_per_episode', 'total_duration_per_episode', 'Visitas', 'distancias_siguiendo_pared'); 
     % movmean_const = ceil(i * 0.5); % el 20% del numero de episodios, se va haciendo mayor en función del número de episodios
-    movmean_const = 50;
+    movmean_const = 100;
 
     subplot(3,1,1)
     plot(movmean(total_reward_per_episode,movmean_const))

@@ -6,37 +6,27 @@ clear; close all;
 % Booleanos
 modo_politica_aprendida = false; % pongo epsilon igual a 5%
 ver_simulador = false;
-ver_vista_desde_robot = false; % elegir entre ver simulador o ver desde robot
+ver_vista_desde_robot = true; % elegir entre ver simulador o ver desde robot
 estoy_aprendiendo = true;
 
 ver_recompensas_dentro_episodio = false;
 ver_seguimiento_pared_dentro_episodio = false;
-<<<<<<< Updated upstream
-ver_evolucion_recompensas = true;
-
-% Enteros 
-episodios_totales_entrenamiento = 1000;
-=======
 
 ver_evolucion_recompensas = false;
 
 % Enteros 
 episodios_totales_entrenamiento = 2000;
->>>>>>> Stashed changes
 num_episodios_tendencia = 30;
 
 % Variables directorio de guardado
-carpeta_LearningData = "LearningData9_numLasers";
+carpeta_LearningData = "LearningData11_lasersDer";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
-<<<<<<< Updated upstream
-v_apren = "4"; % version del aprendizaje
-num_pto_topografico = 0; % solo usado en versiones vw y T
-=======
-stateArrayOpt.num_ojos = 8;
-v_apren = "8"; % version del aprendizaje
->>>>>>> Stashed changes
-es_primer_episodio = false;
+stateArrayOpt.num_ojos = 3;
+v_apren = "3D"; % version del aprendizaje
+es_primer_episodio = true;
+uso_laser_central = false;
+laseres_en_region_izquierda = true;
 % ---------------------------------------------
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
@@ -47,11 +37,7 @@ num_pto_topografico = 0; % solo usado en versiones vw y T
 % Inicialización del entorno de aprendizaje
 %----------------------------------
 
-<<<<<<< Updated upstream
-[paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes();
-=======
-[paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt);
->>>>>>> Stashed changes
+[paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt, laseres_en_region_izquierda);
 
 % Parametros del aprendizaje
 gamma = QLearningOpt.discount_factor;
@@ -60,11 +46,8 @@ gamma = QLearningOpt.discount_factor;
 [vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_LearningData, num_pto_topografico);
 
 % Anado las rutinas de calculo al path
-addpath("funciones\")
-<<<<<<< Updated upstream
-=======
 addpath("graficos\")
->>>>>>> Stashed changes
+addpath("funciones\")
 
 %----------------------------------
 % Inicialización del simulador
@@ -108,7 +91,7 @@ while num_episodes < episodios_totales_entrenamiento
     while(~c && (t-t_end_last_episode)<QLearningOpt.max_time_duration_episode) %mientras no me choque y no se pase el tiempo maximo
         % ALGORITMO Q-LEARNING
         % Obtengo datos de los sensores, represento y lo paso a Qindex
-        [~, stateArrayDisc] = get_stateArrays(zs, as, stateArrayOpt, Options);
+        [~, stateArrayDisc] = get_stateArrays(zs, as, stateArrayOpt, Options, uso_laser_central);
         current_state = traductor_stateArray2Qindex(stateArrayDisc,stateArrayOpt);
 
         % Decidir accion
@@ -119,7 +102,8 @@ while num_episodes < episodios_totales_entrenamiento
         % Ejecuto una accion durante un tiempo
         [c, zs, as, lasers, gtposes, t, lastst] = ejecutoAccionDuranteUnTiempo(action, lastst, vlin, vang, TL, TG, t, c, s, steptime, ver_simulador, ts, gtposes, lasers, stateArrayOpt);    
 
-        [stateArrayCont, stateArrayDisc] = get_stateArrays(zs, as, stateArrayOpt, Options);
+        [stateArrayCont, stateArrayDisc] = get_stateArrays(zs, as, stateArrayOpt, Options, uso_laser_central);
+        representarVistaDesdeRobot(ver_vista_desde_robot, stateArrayDisc, stateArrayCont, stateArrayOpt, gtposes(:,end), paredes_mapa);
         next_state = traductor_stateArray2Qindex(stateArrayDisc,stateArrayOpt);
 
         [distancia_siguiendo_pared, reward, total_reward_episode] = obtengoRecompensas(zs, as, Options, action, c, sars, TL, TG, distancia_siguiendo_pared, total_reward_episode, vlin);
@@ -163,11 +147,7 @@ end
 
 
 % Inicializo las constantes
-<<<<<<< Updated upstream
-function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes()
-=======
-function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt)
->>>>>>> Stashed changes
+function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionConstantes(stateArrayOpt, laseres_en_region_izquierda)
     % Opciones del Q-Learning
     QLearningOpt.max_time_duration_episode = 40; %seconds
     QLearningOpt.discount_factor = 0.99;
@@ -177,17 +157,16 @@ function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionCo
     % Opciones de simulacion
     Options.max_laser_range = 3.3; %maxima distancia tomada como valida (en m)
     Options.number_of_laser_regions = 3; % para calcular el ransac de la pared derecha
-    % Options.total_points_laser = 1080; % si quiero que coja los 3 sectores de visión
-    Options.total_points_laser = 2*1080/3; % si guiero que solo coja el sector derecho y frontal
+    if(laseres_en_region_izquierda)
+        Options.total_points_laser = 1080; % si quiero que coja los 3 sectores de visión
+    else
+        Options.total_points_laser = 2*1080/3; % si quiero que solo coja el sector derecho y frontal
+    end
 
     Options.tolerance_dist_RANSAC = 0.01;
     Options.sampleSize_RANSAC = 2;
 
     % Defino las caracteristicas de mi struct de estados discretizados
-<<<<<<< Updated upstream
-    stateArrayOpt.num_ojos = 4;
-=======
->>>>>>> Stashed changes
     stateArrayOpt.num_distancias = 3;
 
     stateArrayOpt.total_states = stateArrayOpt.num_distancias^stateArrayOpt.num_ojos; %: numero de estados posibles
