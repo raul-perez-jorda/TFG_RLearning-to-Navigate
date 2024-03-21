@@ -22,5 +22,6 @@ function [stateArray] = traductor_Qindex2stateArray(Qindex, stateArrayOpt)
     stateArray.ang_fron = digit_state_array(4);
     stateArray.dist_fron = digit_state_array(5);
     stateArray.qual_fron = digit_state_array(6);
+
 end
 
