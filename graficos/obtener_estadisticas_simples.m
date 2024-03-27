@@ -5,10 +5,14 @@ clear; close all;
 % carpeta_LearningData = "LearningData_Hiperparametros";
 % carpeta_LearningData = "LearningData_vw";
 % carpeta_LearningData = "LearningData9_numLasers";
-carpeta_LearningData = "LearningData10_numLasersMinDistRegion";
+% carpeta_LearningData = "LearningData10_numLasersMinDistRegion";
+
+carpeta_LearningData = "LearningData12_searchingGoodPerformance";
+versiones = ["1", "2", "3", "4"];
+
 
 % versiones = ["3"; "3D"; "4"; "4D"; "5"; "5D"; "6"; "6D"; "7"; "7D"; "8"; "8D"];
-versiones = ["3"; "4"; "5"; "6"; "7"; "8"];
+% versiones = ["3"; "4"; "5"; "6"; "7"; "8"];
 % versiones = ["3D"; "4D"; "5D"; "6D"; "7D"; "8D"];
 % versiones = ["6"; "6D"; "7"; "7D"; "8"; "8D"];
 % versiones = ["6D"; "6D_IT"; "6D_IC"; "6D_TP"; "6D_TT"; "6D_TC"; "6D_CP"; "6D_CT"; "6D_CC"];

@@ -23,7 +23,7 @@ carpeta_LearningData = "LearningData12_searchingGoodPerformance";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
 stateArrayOpt.num_ojos = 6;
-v_apren = "3"; % version del aprendizaje
+v_apren = "4"; % version del aprendizaje
 es_primer_episodio = false;
 uso_laser_central = false;
 laseres_en_region_izquierda = false;
@@ -32,7 +32,7 @@ usar_tiempo_accion_modificada = true;
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
 epsilon_type = "ptje_aprendido"; % ptje_aprendido(P) - tiempo_vida(T) - constante(C)
-num_pto_topografico = 22; % solo usado en versiones vw y T
+num_pto_topografico = 30; % solo usado en versiones vw y T
 
 %----------------------------------
 % Inicialización del entorno de aprendizaje
@@ -107,7 +107,7 @@ while num_episodes < episodios_totales_entrenamiento
         representarVistaDesdeRobot(ver_vista_desde_robot, stateArrayDisc, stateArrayCont, stateArrayOpt, gtposes(:,end), paredes_mapa);
         next_state = traductor_stateArray2Qindex(stateArrayDisc,stateArrayOpt);
 
-        [distancia_siguiendo_pared, reward, total_reward_episode] = obtengoRecompensas(zs, as, Options, action, c, sars, TL, TG, distancia_siguiendo_pared, total_reward_episode, vlin);
+        [distancia_siguiendo_pared, reward, total_reward_episode] = obtengoRecompensas(zs, as, Options, action, c, sars, TL, distancia_siguiendo_pared, total_reward_episode, vlin);
                
         [Qtable, Visitas] = aprendoYActualizoQtable(Qtable, Visitas, current_state, action, reward, next_state, alpha_type, gamma, num_episodes);
 
@@ -251,7 +251,7 @@ function [vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_Learn
         vlin = v_samples(num_pto_topografico);
         vang = w_samples(num_pto_topografico);
     elseif usar_tiempo_accion_modificada == true
-        load('LearningData_Folders/LearningData_T/datos_topograficos.mat', 'TL_samples', 'TG_samples');
+        load('assets/datos_topograficos.mat', 'TL_samples', 'TG_samples');
 
         vlin = 85/100*0.7; % velocidad lineal, entre 0 y 0.7m/s
         vang = deg2rad( 85/100*180 ); % velocidad angular, entre 36 y 180º/s
@@ -341,12 +341,12 @@ function [Qtable, Visitas] = aprendoYActualizoQtable(Qtable, Visitas, current_st
     Visitas(current_state,action) = Visitas(current_state,action) + 1;
 end
 
-function [distancia_siguiendo_pared, reward, total_reward_episode] = obtengoRecompensas(zs, as, Options, action, c, sars, TL, TG, distancia_siguiendo_pared, total_reward_episode, vlin)
+function [distancia_siguiendo_pared, reward, total_reward_episode] = obtengoRecompensas(zs, as, Options, action, c, sars, TL, distancia_siguiendo_pared, total_reward_episode, vlin)
     % Obtengo datos del ransac de la pared de la derecha
     [~, ~, ~, ~, triplete_der] = RANSAC_triplete_der(zs, as, Options);
             
     % Obtengo recompensa
-    [reward, estoy_siguiendo_pared] = reward_discretization(action, c, sars, triplete_der, TL, TG); 
+    [reward, estoy_siguiendo_pared] = reward_discretization(action, c, sars, triplete_der); 
     if estoy_siguiendo_pared
         distancia_siguiendo_pared = distancia_siguiendo_pared + vlin*TL;
     end 
