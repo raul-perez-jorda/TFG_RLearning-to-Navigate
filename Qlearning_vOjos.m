@@ -12,19 +12,19 @@ estoy_aprendiendo = true;
 ver_recompensas_dentro_episodio = false;
 ver_seguimiento_pared_dentro_episodio = false;
 
-ver_evolucion_recompensas = true;
+ver_evolucion_recompensas = false;
 
 % Enteros 
 episodios_totales_entrenamiento = 2000;
 num_episodios_tendencia = 100;
 
 % Variables directorio de guardado
-carpeta_LearningData = "LearningData12_searchingGoodPerformance";
+carpeta_LearningData = "LearningData13_pruebasTopografia";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
 stateArrayOpt.num_ojos = 6;
-v_apren = "4"; % version del aprendizaje
-es_primer_episodio = false;
+v_apren = "T2"; % version del aprendizaje
+es_primer_episodio = true;
 uso_laser_central = false;
 laseres_en_region_izquierda = false;
 usar_tiempo_accion_modificada = true;
@@ -32,7 +32,7 @@ usar_tiempo_accion_modificada = true;
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
 epsilon_type = "ptje_aprendido"; % ptje_aprendido(P) - tiempo_vida(T) - constante(C)
-num_pto_topografico = 30; % solo usado en versiones vw y T
+num_pto_topografico = 2; % solo usado en versiones vw y T
 
 %----------------------------------
 % Inicialización del entorno de aprendizaje
@@ -173,7 +173,7 @@ function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionCo
     stateArrayOpt.total_states = stateArrayOpt.num_distancias^stateArrayOpt.num_ojos; %: numero de estados posibles
     stateArrayOpt.num_actions = 3;
 
-    stateArrayOpt.min_dist = 0.35;
+    stateArrayOpt.min_dist = 0.35/2;
     stateArrayOpt.max_dist = 1.5;
 
     paredes_mapa = [0, 0, 10, 0 ;... % Defino el inicio y el final de cada pared

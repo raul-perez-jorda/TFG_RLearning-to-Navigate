@@ -47,6 +47,8 @@ legend(versiones)
 title('Recompensa obtenida por episodio (media móvil)')
 xlabel('Episodio')
 ylabel('Recompensa')
+% hago que el eje y sea logarítmico
+set(gca,'YScale','log')
 
 subplot(3,1,2)
 legend(versiones)

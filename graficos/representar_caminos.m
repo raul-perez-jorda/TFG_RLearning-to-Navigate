@@ -1,11 +1,11 @@
 clear; close all;
 
 carpeta_LearningData = "LearningData_Folders/LearningData12_searchingGoodPerformance";
-version = "2";
+version = "4";
 
 siempre_mismo_inicio = true;
-x_inicial = 5;
-y_inicial = 5;
+x_inicial = 1;
+y_inicial = 9;
 
 anchoMin = 0.5; % Ancho mínimo del trazo
 anchoMax = 2; % Ancho máximo del trazo
