@@ -52,11 +52,7 @@ function representarVistaDesdeRobot(ver_vista_desde_robot, stateArrayDisc, state
         plot(robot_head)
 
         % Pinto las paredes
-        for i = 1:size(paredes_mapa, 1)
-            x_pared = [paredes_mapa(i,1), paredes_mapa(i,3)];
-            y_pared = [paredes_mapa(i,2), paredes_mapa(i,4)];
-            plot(x_pared, y_pared, '-k', 'LineWidth', 2);
-        end
+        pintoParedesMapa(paredes_mapa);
 
         grid on
         xlim([-1.25 11.25]); ylim([-1.25 11.25]);

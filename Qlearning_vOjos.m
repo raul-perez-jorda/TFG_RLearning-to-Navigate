@@ -19,19 +19,20 @@ episodios_totales_entrenamiento = 2000;
 num_episodios_tendencia = 100;
 
 % Variables directorio de guardado
-carpeta_LearningData = "LearningData13_DerechaYCerca";
+carpeta_LearningData = "LearningData12_searchingGoodPerformance";
 
 % CAMBIAR EN CADA PARALELIZACION --------------
-stateArrayOpt.num_ojos = 3;
-v_apren = "3DC"; % version del aprendizaje
-es_primer_episodio = true;
+stateArrayOpt.num_ojos = 6;
+v_apren = "3"; % version del aprendizaje
+es_primer_episodio = false;
 uso_laser_central = false;
 laseres_en_region_izquierda = false;
+usar_tiempo_accion_modificada = true;
 % ---------------------------------------------
 
 alpha_type = "descenso_infinito"; % descenso_infinito(I) - tiempo_vida(T) - constante(C)
 epsilon_type = "ptje_aprendido"; % ptje_aprendido(P) - tiempo_vida(T) - constante(C)
-num_pto_topografico = 9; % solo usado en versiones vw y T
+num_pto_topografico = 22; % solo usado en versiones vw y T
 
 %----------------------------------
 % Inicialización del entorno de aprendizaje
@@ -43,7 +44,7 @@ num_pto_topografico = 9; % solo usado en versiones vw y T
 gamma = QLearningOpt.discount_factor;
 
 [Qtable, Visitas, total_reward_per_episode, total_duration_per_episode, distancias_siguiendo_pared, num_episodes, ptos_aleat] = obtengoQTableYResultadosEpisodios(es_primer_episodio, stateArrayOpt, carpeta_LearningData, v_apren);
-[vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_LearningData, num_pto_topografico);
+[vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_LearningData, num_pto_topografico, usar_tiempo_accion_modificada);
 
 % Anado las rutinas de calculo al path
 addpath("graficos\")
@@ -64,7 +65,7 @@ s.setRangeDrawing(0);
 %----------------------------------
 while num_episodes < episodios_totales_entrenamiento
 
-    [ptje_parejas_no_visitadas] = mensajesIniciales(num_episodes, v_apren, num_pto_topografico, carpeta_LearningData, Visitas, Options, stateArrayOpt);
+    [ptje_parejas_no_visitadas] = mensajesIniciales(num_episodes, v_apren, num_pto_topografico, carpeta_LearningData, Visitas, Options, stateArrayOpt, usar_tiempo_accion_modificada, TL, TG);
     epsilon = get_epsilon(epsilon_type, num_episodes, ptje_parejas_no_visitadas, modo_politica_aprendida);
 
     [robotdef] = inicializarRobotYColocarloEnMapa(s, ptos_aleat);
@@ -195,16 +196,16 @@ function [paredes_mapa, stateArrayOpt, QLearningOpt, Options] = inicializacionCo
 end
 
 % Muestro unos mensajes al inicio de cada episodio
-function [ptje_parejas_no_visitadas] = mensajesIniciales(num_episodes, v_apren, num_pto_topografico, carpeta_LearningData, Visitas, Options, stateArrayOpt)
+function [ptje_parejas_no_visitadas] = mensajesIniciales(num_episodes, v_apren, num_pto_topografico, carpeta_LearningData, Visitas, Options, stateArrayOpt, usar_tiempo_accion_modificada, TL, TG)
     disp('Episodio '+string(num_episodes)+' del entrenamiento actual')
     disp('Aprendizaje para ' + string(v_apren))
     disp('Numero de puntos laser: '+ string(Options.total_points_laser))
     if carpeta_LearningData == "LearningData_vw"
         disp('Velocidad lineal: '+ string(v_samples(num_pto_topografico)) + ' m/s')
         disp('Velocidad angular: '+ string(w_samples(num_pto_topografico)) + ' º/s')
-    elseif carpeta_LearningData == "LearningData_T"
-        disp('Tiempo de mov. lineal TL: '+ string(TL_samples(num_pto_topografico)) + ' m/s')
-        disp('Tiempo de mov. giro TG: '+ string(TG_samples(num_pto_topografico)) + ' º/s')
+    elseif usar_tiempo_accion_modificada == true
+        disp('Tiempo de mov. lineal TL: '+ string(TL) + ' m/s')
+        disp('Tiempo de mov. giro TG: '+ string(TG) + ' º/s')
     end
 
     % Muestro algunas estadisticas
@@ -237,7 +238,7 @@ function [Qtable, Visitas, total_reward_per_episode, total_duration_per_episode,
     end
 end
 
-function [vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_LearningData, num_pto_topografico)
+function [vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_LearningData, num_pto_topografico, usar_tiempo_accion_modificada)
     % Inicializo los valores v, w, TL y TG a sus valores predefinidos (cambio en función del entrenamiento)
     vlin = 1;
     vang = pi/2;
@@ -249,7 +250,7 @@ function [vlin, vang, TL, TG] = obtengoVelocidadesYTiemposDeAccion(carpeta_Learn
 
         vlin = v_samples(num_pto_topografico);
         vang = w_samples(num_pto_topografico);
-    elseif carpeta_LearningData == "LearningData_T" || carpeta_LearningData=="LearningData"
+    elseif usar_tiempo_accion_modificada == true
         load('LearningData_Folders/LearningData_T/datos_topograficos.mat', 'TL_samples', 'TG_samples');
 
         vlin = 85/100*0.7; % velocidad lineal, entre 0 y 0.7m/s
